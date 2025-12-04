@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memory Match - Playful Matching Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/favicon.svg" />
+</head>
+
+<body data-theme="candy" class="theme-candy">
+    <header class="app-header">
+        <div class="brand">
+            <span class="logo" aria-hidden="true">🧠</span>
+            <h1>Memory Match</h1>
+        </div>
+        <nav class="top-actions">
+            <button id="btn-mute" class="icon-btn" aria-pressed="false" aria-label="Toggle sound">🔊</button>
+            <button id="btn-theme" class="icon-btn" aria-label="Change theme">🎨</button>
+            <button id="btn-settings" class="icon-btn" aria-label="Open settings">⚙️</button>
+            <button id="btn-dashboard" class="icon-btn" aria-label="Open dashboard">📊</button>
+        </nav>
+    </header>
+
+    <main id="app" class="app">
+        <!-- Level Select Screen -->
+        <section id="screen-level" class="screen active" aria-labelledby="level-title">
+            <h2 id="level-title">Choose Your Adventure</h2>
+            <form id="level-form" class="card form">
+                <div class="field-group">
+                    <label for="difficulty">Difficulty</label>
+                    <div class="segmented">
+                        <input type="radio" name="difficulty" id="diff-easy" value="easy" checked />
+                        <label for="diff-easy">Easy</label>
+                        <input type="radio" name="difficulty" id="diff-medium" value="medium" />
+                        <label for="diff-medium">Medium</label>
+                        <input type="radio" name="difficulty" id="diff-hard" value="hard" />
+                        <label for="diff-hard">Hard</label>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label for="theme">Theme</label>
+                    <select id="theme">
+                        <option value="candy" selected>Candy</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="forest">Forest</option>
+                        <option value="sunset">Sunset</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label for="deck">Card Deck</label>
+                    <select id="deck">
+                        <option value="emojis" selected>Emojis</option>
+                        <option value="animals">Animals</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="custom">Custom Images</option>
+                    </select>
+                </div>
+
+                <div class="actions">
+                    <button id="btn-start" class="primary">Start Game</button>
+                    <button id="btn-leaderboard" type="button" class="ghost">Leaderboard</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Game Screen -->
+        <section id="screen-game" class="screen" aria-labelledby="game-title" aria-live="polite">
+            <div class="hud">
+                <div class="hud-group">
+                    <div class="stat"><span aria-hidden="true">⏱</span> <span id="time">00:00</span></div>
+                    <div class="stat"><span aria-hidden="true">🔁</span> <span id="moves">0</span> moves</div>
+                    <div class="stat"><span aria-hidden="true">🧩</span> <span id="progress">0%</span></div>
+                </div>
+                <div class="hud-group">
+                    <button id="btn-hint" class="secondary">Hint</button>
+                    <button id="btn-peek" class="secondary">Peek</button>
+                    <button id="btn-shuffle" class="secondary">Shuffle</button>
+                    <button id="btn-restart" class="danger">Restart</button>
+                    <button id="btn-home-top" class="ghost" type="button">Home</button>
+                </div>
+            </div>
+
+            <div id="board" class="board" role="grid" aria-label="Memory board"></div>
+            <div id="sr-announcer" class="sr-only" aria-live="polite"></div>
+        </section>
+
+        <!-- Win / Game Over Screen -->
+        <section id="screen-win" class="screen" aria-labelledby="win-title">
+            <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+            <div class="win-card card">
+                <h2 id="win-title">You did it! 🎉</h2>
+                <p><strong>Time:</strong> <span id="final-time">00:00</span> · <strong>Moves:</strong> <span
+                        id="final-moves">0</span></p>
+                <div class="actions">
+                    <button id="btn-next" class="primary">Next Level</button>
+                    <button id="btn-play-again" class="secondary">Play Again</button>
+                    <button id="btn-home" class="ghost">Home</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leaderboard Screen -->
+        <section id="screen-leaderboard" class="screen" aria-labelledby="lb-title">
+            <h2 id="lb-title">Leaderboard</h2>
+            <div class="leaderboard card">
+                <div class="lb-controls">
+                    <select id="lb-difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <button id="btn-clear-lb" class="danger">Clear</button>
+                </div>
+                <ol id="lb-list" class="lb-list" aria-live="polite"></ol>
+                <div class="actions">
+                    <button id="btn-back-home" class="ghost">Back</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Screen -->
+        <section id="screen-dashboard" class="screen" aria-labelledby="dash-title">
+            <h2 id="dash-title">Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card profile">
+                    <div class="profile-row">
+                        <div class="avatar" id="profile-avatar" aria-hidden="true">🙂</div>
+                        <div class="profile-fields">
+                            <label for="profile-name">Player name</label>
+                            <input id="profile-name" type="text" placeholder="Guest" />
+                            <div class="avatar-pick">
+                                <label for="profile-emoji">Avatar</label>
+                                <select id="profile-emoji">
+                                    <option>🙂</option>
+                                    <option>😎</option>
+                                    <option>🧠</option>
+                                    <option>🐱</option>
+                                    <option>🦄</option>
+                                    <option>🚀</option>
+                                </select>
+                                <button id="btn-profile-save" class="secondary" type="button">Save Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stats">
+                    <h3>Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="label">Games Played</div>
+                            <div id="st-games" class="value">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Wins</div>
+                            <div id="st-wins" class="value">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Best Time</div>
+                            <div id="st-best" class="value">--:--</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Least Moves</div>
+                            <div id="st-least" class="value">--</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Avg Time</div>
+                            <div id="st-avg-time" class="value">--:--</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Avg Moves</div>
+                            <div id="st-avg-moves" class="value">--</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">Win Streak</div>
+                            <div id="st-streak" class="value">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card charts">
+                    <h3>Performance</h3>
+                    <div class="charts-grid">
+                        <div class="ring">
+                            <svg viewBox="0 0 120 120" width="160" height="160" aria-label="Win percentage">
+                                <circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.15)" stroke-width="12"
+                                    fill="none" />
+                                <circle id="ring-progress" cx="60" cy="60" r="52" stroke="var(--secondary)"
+                                    stroke-width="12" fill="none" stroke-linecap="round" transform="rotate(-90 60 60)"
+                                    stroke-dasharray="0 327" />
+                                <text id="ring-label" x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
+                                    font-size="20" fill="white">0%</text>
+                            </svg>
+                        </div>
+                        <div class="bars">
+                            <svg id="bar-chart" viewBox="0 0 240 120" width="100%" height="160"
+                                aria-label="Recent times"></svg>
+                        </div>
+                    </div>
+
+                    <div class="card last-result">
+                        <h3>Last Game</h3>
+                        <p id="lr-result">—</p>
+                        <div class="last-row">
+                            <span><strong>Time:</strong> <span id="lr-time">--:--</span></span>
+                            <span><strong>Moves:</strong> <span id="lr-moves">--</span></span>
+                            <span id="lr-flags"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <button id="btn-dash-play" class="primary" type="button">Start Game</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-backdrop" class="modal-backdrop" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+            <div class="modal-header">
+                <h3 id="settings-title">Settings</h3>
+                <button id="btn-settings-close" type="button" class="icon-btn" aria-label="Close settings">✖️</button>
+            </div>
+            <div class="modal-body">
+                <div class="field-row">
+                    <label for="music-volume">Music Volume</label>
+                    <input id="music-volume" type="range" min="0" max="1" step="0.01" />
+                </div>
+                <div class="field-row">
+                    <label for="sfx-volume">SFX Volume</label>
+                    <input id="sfx-volume" type="range" min="0" max="1" step="0.01" />
+                </div>
+                <div class="field-row">
+                    <label for="anim-speed">Animation</label>
+                    <select id="anim-speed">
+                        <option value="normal">Normal</option>
+                        <option value="reduced">Reduced motion</option>
+                    </select>
+                </div>
+                <div class="field-row">
+                    <label class="checkbox"><input id="music-enabled" type="checkbox" checked /> Background
+                        Music</label>
+                </div>
+                <div class="field-row">
+                    <label class="checkbox"><input id="colorblind" type="checkbox" /> Colorblind / High Contrast</label>
+                </div>
+                <div class="field-row">
+                    <label class="checkbox"><input id="haptics" type="checkbox" /> Haptics (mobile)</label>
+                </div>
+                <div class="field-row">
+                    <label class="checkbox"><input id="confirm-restart" type="checkbox" /> Confirm on Restart</label>
+                </div>
+            </div>
+            <div class="modal-footer actions">
+                <button id="btn-settings-save" type="button" class="primary">Save</button>
+                <button id="btn-settings-cancel" type="button" class="ghost">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>Made with ❤️ · <a href="https://github.com/Sanjay837" target="_blank" rel="noreferrer">Contribute</a></p>
+    </footer>
+
+    <audio id="bg-music" loop src="assets/audio/bg.mp3"></audio>
+    <audio id="snd-flip" src="assets/audio/flip.mp3"></audio>
+    <audio id="snd-match" src="assets/audio/match.mp3"></audio>
+    <audio id="snd-mismatch" src="assets/audio/mismatch.mp3"></audio>
+    <audio id="snd-victory" src="assets/audio/victory.mp3"></audio>
+
+
+    <script src="app.js"></script>
+</body>
+
+</html>
